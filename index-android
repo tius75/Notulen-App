@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title id="appTitle">Tius APP</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins:wght@300;400;600&family=Open+Sans&family=Lato&display=swap" rel="stylesheet">
+  <style>
+    body {
+      max-width: 480px;
+      margin: auto;
+      padding: 1rem;
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8f9fa;
+    }
+    .section { display: none; margin-bottom: 3rem; }
+    .active { display: block; }
+    .fixed-bottom-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      background: #ffffff;
+      border-top: none;
+      z-index: 999;
+    }
+    .fixed-bottom-menu button {
+      flex: 1;
+      padding: 0.8rem;
+      border: none;
+      background: none;
+      font-weight: bold;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .toolbar {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
+    }
+    .toolbar select, .toolbar input[type="color"] {
+      flex: 1;
+    }
+    #notulenEditor, #whatsappBodyEditor {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 1rem;
+    }
+    #whatsappBodyEditor {
+        height: 600px;
+    }
+    #absenTable td input {
+      width: 100%;
+    }
+    .hamburger {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+    }
+    .history-item {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: white;
+    }
+    .history-date {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    .share-btn {
+      background-color: #25D366;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
+    #authSection {
+      text-align: center;
+      padding-top: 50px;
+    }
+    #authSection input {
+      margin-bottom: 10px;
+    }
+    .main-content {
+        display: none;
+    }
+    .loading-spinner {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .dropdown-menu {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .share-social-media button {
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="authSection" class="section active">
+    <h4>Tius APP</h4>
+    <div class="mb-3">
+      <input type="email" class="form-control" id="emailInput" placeholder="Email">
+    </div>
+    <div class="mb-3">
+      <input type="password" class="form-control" id="passwordInput" placeholder="Password">
+    </div>
+    <button onclick="signIn()" class="btn btn-primary w-100 mb-2">Masuk</button>
+    <button onclick="signUp()" class="btn btn-secondary w-100">Daftar</button>
+  </div>
+
+  <div class="main-content">
+    <button class="btn btn-light hamburger" onclick="toggleHistoriMenu()">☰</button>
+    <h4 class="text-center">📋 <span id="organizationName">Dokumentasi Rapat Yayasan Sindu Jawa Kawedar</span></h4>
+
+    <div id="historiMenu" class="section">
+      <h5>📚 Menu Utama</h5>
+      <button onclick="tampilkan('notulenSection')" class="btn btn-outline-primary w-100 mb-2">🏠 Home (Notulen)</button>
+      <button onclick="tampilkan('agendaSection')" class="btn btn-outline-primary w-100 mb-2">Buat Agenda</button>
+      <button onclick="tampilkan('undanganSection')" class="btn btn-outline-primary w-100 mb-2">Buat Undangan</button>
+      <button onclick="tampilkan('whatsappSection')" class="btn btn-outline-primary w-100 mb-2">Kirim WhatsApp</button>
+      
+      <div class="dropdown mt-3 mb-3">
+        <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="dropdownHistoriButton" data-bs-toggle="dropdown" aria-expanded="false">
+          📚 Histori
+        </button>
+        <ul class="dropdown-menu w-100" aria-labelledby="dropdownHistoriButton">
+          <li><button class="dropdown-item" onclick="tampilkan('historiAgenda')">Histori Agenda</button></li>
+          <li><button class="dropdown-item" onclick="tampilkan('historiUndangan')">Histori Undangan</button></li>
+          <li><button class="dropdown-item" onclick="tampilkan('historiNotulen')">Histori Notulen</button></li>
+          <li><button class="dropdown-item" onclick="tampilkan('historiProgres')">Histori Progres</button></li>
+          <li><button class="dropdown-item" onclick="tampilkan('historiMedia')">Histori Media</button></li>
+          <li><button class="dropdown-item" onclick="tampilkan('historiWhatsapp')">Histori WhatsApp</button></li>
+        </ul>
+      </div>
+      
+      <button onclick="tampilkan('settingsSection')" class="btn btn-outline-secondary w-100 mb-2">Pengaturan</button>
+      <button onclick="signOut()" class="btn btn-danger w-100">Keluar</button>
+    </div>
+
+    <div id="undanganSection" class="section">
+      <h5>📩 Buat Undangan Rapat</h5>
+      <div class="mb-3">
+        <label class="form-label">Tanggal Rapat</label>
+        <input type="datetime-local" class="form-control" id="undanganTanggal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Tempat</label>
+        <input type="text" class="form-control" id="undanganTempat" placeholder="Masukkan tempat rapat">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Agenda</label>
+        <input type="text" class="form-control" id="undanganAgenda" placeholder="Masukkan agenda rapat">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Peserta (pisahkan dengan koma)</label>
+        <textarea class="form-control" id="undanganPeserta" rows="3" placeholder="Masukkan daftar peserta, pisahkan dengan koma"></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Catatan Tambahan</label>
+        <textarea class="form-control" id="undanganCatatan" rows="3" placeholder="Masukkan catatan tambahan"></textarea>
+      </div>
+      <button onclick="simpanUndangan()" class="btn btn-primary w-100 mb-2">💾 Simpan Undangan</button>
+      <button onclick="shareUndangan()" class="btn btn-success w-100">📤 Bagikan via WhatsApp</button>
+    </div>
+
+    <div id="agendaSection" class="section">
+      <h5>📅 Buat Agenda Rapat</h5>
+      <div class="mb-3">
+        <label class="form-label">Tanggal Rapat</label>
+        <input type="datetime-local" class="form-control" id="agendaTanggal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Judul Agenda</label>
+        <input type="text" class="form-control" id="agendaJudul" placeholder="Masukkan judul agenda">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Poin-poin Agenda</label>
+        <textarea class="form-control" id="agendaPoin" rows="5" placeholder="Masukkan poin-poin agenda (satu poin per baris)"></textarea>
+      </div>
+      <button onclick="simpanAgenda()" class="btn btn-primary w-100 mb-2">💾 Simpan Agenda</button>
+      <button onclick="shareAgenda()" class="btn btn-success w-100">📤 Bagikan via WhatsApp</button>
+    </div>
+
+    <div id="whatsappSection" class="section">
+        <h5>💬 Kirim WhatsApp</h5>
+        <div class="mb-3">
+            <label class="form-label">Tanggal</label>
+            <input type="datetime-local" class="form-control" id="whatsappTanggal">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Header / Judul</label>
+            <input type="text" class="form-control" id="whatsappHeader" placeholder="Masukkan header atau judul pesan">
+        </div>
+        <div class="toolbar">
+            <button onclick="document.execCommand('bold', false, null);" class="btn btn-light btn-sm"><b>B</b></button>
+            <button onclick="document.execCommand('italic', false, null);" class="btn btn-light btn-sm"><i>I</i></button>
+            <button onclick="document.execCommand('underline', false, null);" class="btn btn-light btn-sm"><u>U</u></button>
+            <button onclick="document.execCommand('strikeThrough', false, null);" class="btn btn-light btn-sm"><s>S</s></button>
+            <button onclick="document.execCommand('insertOrderedList', false, null);" class="btn btn-light btn-sm">OL</button>
+            <button onclick="document.execCommand('insertUnorderedList', false, null);" class="btn btn-light btn-sm">UL</button>
+            <select id="whatsappFontSelector" onchange="document.getElementById('whatsappBodyEditor').style.fontFamily = this.value;" class="form-select form-select-sm">
+                <option value="Poppins">Poppins</option>
+                <option value="Roboto">Roboto</option>
+                <option value="Open Sans">Open Sans</option>
+                <option value="Lato">Lato</option>
+            </select>
+            <input type="color" id="whatsappColorPicker" onchange="document.getElementById('whatsappBodyEditor').style.color = this.value;" class="form-control form-control-sm form-control-color">
+            <input type="file" accept="image/*,video/*" id="whatsappMediaUpload" onchange="uploadWhatsappMedia(event)" class="form-control form-control-sm" />
+        </div>
+        <div id="whatsappBodyEditor" contenteditable="true" style="font-family: Poppins; color: #000;"></div>
+        <div class="mb-3 mt-3">
+            <label class="form-label">Footer / Tambahan</label>
+            <textarea class="form-control" id="whatsappFooter" rows="2" placeholder="Masukkan footer atau catatan tambahan"></textarea>
+        </div>
+        <button onclick="simpanWhatsApp()" class="btn btn-primary w-100 mb-2">💾 Simpan WhatsApp</button>
+        <button onclick="bacaWhatsApp()" class="btn btn-info w-100 mb-2">🔊 Baca Isi WhatsApp</button>
+        <button onclick="startWhatsappVoiceToText()" class="btn btn-warning w-100 mb-2">🎤 Mulai Rekam (Voice to Text)</button>
+        <button onclick="shareWhatsApp()" class="btn btn-success w-100 mb-2">📤 Bagikan via WhatsApp</button>
+
+        <div class="mt-3 share-social-media">
+            <h6>Bagikan ke Media Sosial Lain:</h6>
+            <button onclick="shareToFacebook()" class="btn btn-primary btn-sm">Facebook</button>
+            <button onclick="shareToTwitter()" class="btn btn-info btn-sm">X (Twitter)</button>
+            <button onclick="shareToLinkedIn()" class="btn btn-primary btn-sm">LinkedIn</button>
+            <button onclick="shareToTelegram()" class="btn btn-info btn-sm">Telegram</button>
+            <button onclick="shareToCopy()" class="btn btn-secondary btn-sm">Salin Teks</button>
+        </div>
+    </div>
+
+    <div id="historiAgenda" class="section">
+      <h5>🗂️ Histori Agenda</h5>
+      <div id="loadingAgenda" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div id="agendaHistoriList"></div>
+    </div>
+    
+    <div id="historiUndangan" class="section">
+      <h5>📂 Histori Undangan</h5>
+      <div id="loadingUndangan" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div id="undanganHistoriList"></div>
+    </div>
+    
+    <div id="historiNotulen" class="section">
+      <h5>📁 Histori Notulen</h5>
+      <div id="loadingNotulen" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div id="notulenHistoriList"></div>
+    </div>
+    
+    <div id="historiProgres" class="section">
+      <h5>📈 Histori Progres</h5>
+      <div id="loadingProgres" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div id="progresHistoriList"></div>
+    </div>
+    
+    <div id="historiMedia" class="section">
+      <h5>🖼️ Histori Media</h5>
+      <div id="loadingMedia" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div id="mediaHistoriList" class="row row-cols-2 g-2"></div>
+    </div>
+
+    <div id="historiWhatsapp" class="section">
+      <h5>💬 Histori WhatsApp</h5>
+      <div id="loadingWhatsapp" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div id="whatsappHistoriList"></div>
+    </div>
+
+    <div id="notulenSection" class="section">
+      <h5>📝 Notulen Rapat</h5>
+      <input type="date" class="form-control mb-2" id="notulenTanggal">
+      <div class="toolbar">
+        <select id="fontSelector" onchange="document.getElementById('notulenEditor').style.fontFamily = this.value;">
+          <option value="Poppins">Poppins</option>
+          <option value="Roboto">Roboto</option>
+          <option value="Open Sans">Open Sans</option>
+          <option value="Lato">Lato</option>
+        </select>
+        <input type="color" id="colorPicker" value="#000000" onchange="document.getElementById('notulenEditor').style.color = this.value;">
+        <input type="file" accept="image/*,video/*" id="mediaUpload" onchange="uploadMediaToCloudinary(event)" />
+      </div>
+      <button onclick="startRekam()" class="btn btn-warning w-100 mb-2">🎤 Mulai Rekam</button>
+      <div id="notulenEditor" contenteditable="true" style="font-family: Poppins; color: #000;"></div>
+      <button onclick="saveNotulen()" class="btn btn-primary w-100 mt-2">💾 Simpan Notulen</button>
+      <button onclick="bacaNotulen()" class="btn btn-info w-100 mt-2">🔊 Baca Notulen</button>
+      <button onclick="exportPDF()" class="btn btn-danger w-100 mt-2">📄 Export ke PDF</button>
+    </div>
+
+    <div id="absenSection" class="section">
+      <h5>📌 Daftar Absen</h5>
+      <table class="table" id="absenTable">
+        <tbody></tbody>
+      </table>
+      <button class="btn btn-secondary w-100" onclick="tambahAbsenBaris()">➕ Tambah Baris</button>
+      <button class="btn btn-primary w-100 mt-2" onclick="simpanAbsen()">💾 Simpan Absen</button>
+    </div>
+
+    <div id="mediaSection" class="section">
+      <h5>🖼️ Dokumentasi Media</h5>
+      <input type="file" multiple accept="image/*,video/*" class="form-control mb-2" onchange="uploadMultipleMediaToCloudinary(event)">
+      <div id="mediaList" class="row row-cols-2 g-2"></div>
+    </div>
+
+    <div id="progresSection" class="section">
+      <h5>📊 Progres Hasil Rapat</h5>
+      <input type="date" class="form-control mb-2" id="progresTanggal">
+      <textarea class="form-control mb-2" id="progresIsi" placeholder="Isi progres..." rows="5"></textarea>
+      <button class="btn btn-primary w-100" onclick="simpanProgres()">💾 Simpan Progres</button>
+      <button class="btn btn-success w-100 mt-2" onclick="shareProgres()">📤 Bagikan via WhatsApp</button>
+    </div>
+
+    <div id="settingsSection" class="section">
+      <h5>⚙️ Pengaturan Aplikasi</h5>
+      <div class="mb-3">
+        <label for="organizationNameInput" class="form-label">Nama Organisasi/Yayasan</label>
+        <input type="text" class="form-control" id="organizationNameInput" placeholder="Masukkan nama organisasi/yayasan">
+      </div>
+      <button onclick="saveOrganizationName()" class="btn btn-primary w-100">Simpan Nama</button>
+      <button onclick="startBackup()" class="btn btn-warning w-100 mt-2">Cadangkan Data ke Perangkat</button>
+    </div>
+
+    <div class="fixed-bottom-menu">
+      <button onclick="tampilkan('notulenSection')">Notulen</button>
+      <button onclick="tampilkan('absenSection')">Absen</button>
+      <button onclick="tampilkan('mediaSection')">Media</button>
+      <button onclick="tampilkan('progresSection')">Progres</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_gGSnEHoNS7BZvK3Pjo-r4DkkECOKPws",
+      authDomain: "app-rapat.firebaseapp.com",
+      projectId: "app-rapat",
+      storageBucket: "app-rapat.firebasestorage.app",
+      messagingSenderId: "212710534015",
+      appId: "1:212710534015:web:b1191991297caa099ec84a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Cloudinary configuration
+    const CLOUDINARY_CLOUD_NAME = "dmzgy5fpp";
+    const CLOUDINARY_UPLOAD_PRESET = "App_Rapat_Tius";
+
+    // Global variable for organization name and current user
+    let organizationName = "Yayasan Sindu Jawa Kawedar";
+    let currentUser = null;
+
+    // To store the URL of the last uploaded image/video for WhatsApp sharing
+    let lastWhatsappMediaUrl = null;
+
+    // --- Firebase Authentication Functions ---
+    function showMainContent() {
+      document.getElementById('authSection').classList.remove('active');
+      document.querySelector('.main-content').style.display = 'block';
+    }
+
+    function showAuthSection() {
+      document.getElementById('authSection').classList.add('active');
+      document.querySelector('.main-content').style.display = 'none';
+    }
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        console.log("User logged in:", currentUser.uid);
+        showMainContent();
+        loadOrganizationName(currentUser.uid);
+        tampilkan('notulenSection');
+        document.getElementById('notulenTanggal').valueAsDate = new Date();
+        document.getElementById('undanganTanggal').value = new Date().toISOString().slice(0, 16);
+        document.getElementById('agendaTanggal').value = new Date().toISOString().slice(0, 16);
+        document.getElementById('whatsappTanggal').value = new Date().toISOString().slice(0, 16);
+        document.getElementById('progresTanggal').valueAsDate = new Date();
+      } else {
+        currentUser = null;
+        console.log("User logged out.");
+        showAuthSection();
+        organizationName = "Yayasan Sindu Jawa Kawedar";
+        updateOrganizationNameDisplay();
+        clearHistoryLists();
+      }
+    });
+
+    function clearHistoryLists() {
+      document.getElementById("agendaHistoriList").innerHTML = "";
+      document.getElementById("undanganHistoriList").innerHTML = "";
+      document.getElementById("notulenHistoriList").innerHTML = "";
+      document.getElementById("progresHistoriList").innerHTML = "";
+      document.getElementById("mediaHistoriList").innerHTML = "";
+      document.getElementById("whatsappHistoriList").innerHTML = "";
+    }
+
+    async function signIn() {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        alert("Berhasil masuk!");
+      } catch (error) {
+        alert("Gagal masuk: " + error.message);
+        console.error("Login error:", error);
+      }
+    }
+
+    async function signUp() {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        alert("Pendaftaran berhasil! Anda sudah masuk.");
+        saveOrganizationName("Yayasan Sindu Jawa Kawedar", userCredential.user.uid);
+      } catch (error) {
+        alert("Gagal mendaftar: " + error.message);
+        console.error("Sign up error:", error);
+      }
+    }
+
+    function signOut() {
+      auth.signOut().then(() => {
+        alert("Berhasil keluar.");
+      }).catch((error) => {
+        alert("Gagal keluar: " + error.message);
+        console.error("Sign out error:", error);
+      });
+    }
+
+    // --- UI Display Functions ---
+    function tampilkan(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      
+      if (currentUser) {
+        switch(id) {
+          case 'historiAgenda':
+            showLoading('loadingAgenda');
+            loadAgendaHistori();
+            break;
+          case 'historiUndangan':
+            showLoading('loadingUndangan');
+            loadUndanganHistori();
+            break;
+          case 'historiNotulen':
+            showLoading('loadingNotulen');
+            loadNotulenHistori();
+            break;
+          case 'historiProgres':
+            showLoading('loadingProgres');
+            loadProgresHistori();
+            break;
+          case 'historiMedia':
+            showLoading('loadingMedia');
+            loadMediaHistori();
+            break;
+          case 'historiWhatsapp':
+            showLoading('loadingWhatsapp');
+            loadWhatsappHistori();
+            break;
+          case 'settingsSection':
+            document.getElementById('organizationNameInput').value = organizationName;
+            break;
+        }
+      }
+    }
+
+    function showLoading(elementId) {
+      document.getElementById(elementId).style.display = 'block';
+    }
+
+    function hideLoading(elementId) {
+      document.getElementById(elementId).style.display = 'none';
+    }
+
+    function toggleHistoriMenu() {
+      tampilkan('historiMenu');
+    }
+
+    // --- Dynamic Organization Name Functions ---
+    function loadOrganizationName(userId) {
+      if (!userId) return;
+      db.collection("settings").doc(userId).get().then(doc => {
+        if (doc.exists && doc.data().name) {
+          organizationName = doc.data().name;
+        } else {
+          organizationName = "Yayasan Sindu Jawa Kawedar";
+        }
+        updateOrganizationNameDisplay();
+      }).catch(error => {
+        console.error("Error loading organization name:", error);
+        updateOrganizationNameDisplay();
+      });
+    }
+
+    function saveOrganizationName(nameToSave = null, userId = currentUser?.uid) {
+      if (!userId) {
+        alert("Harap masuk terlebih dahulu.");
+        return;
+      }
+      const newName = nameToSave || document.getElementById("organizationNameInput").value.trim();
+      if (newName) {
+        db.collection("settings").doc(userId).set({ name: newName }, { merge: true })
+          .then(() => {
+            organizationName = newName;
+            updateOrganizationNameDisplay();
+            alert("Nama organisasi berhasil diubah!");
+            tampilkan('historiMenu');
+          })
+          .catch(error => {
+            console.error("Error saving organization name:", error);
+            alert("Gagal menyimpan nama organisasi.");
+          });
+      } else {
+        alert("Nama organisasi tidak boleh kosong.");
+      }
+    }
+
+    function updateOrganizationNameDisplay() {
+      document.getElementById("organizationName").innerText = organizationName;
+      document.getElementById("appTitle").innerText = `Dokumentasi Rapat ${organizationName}`;
+    }
+
+    // --- Speech Recognition and Synthesis (for Notulen) ---
+    function startRekam() {
+      if (window.Android) {
+          window.Android.startVoiceToText("notulenEditor");
+      } else if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+          const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+          recognition.lang = 'id-ID';
+          recognition.onresult = e => {
+              document.getElementById("notulenEditor").innerHTML += e.results[0][0].transcript + " ";
+          };
+          recognition.start();
+      } else {
+          alert("Pengenalan suara tidak didukung di browser ini.");
+      }
+    }
+
+    function bacaNotulen() {
+      const teks = document.getElementById("notulenEditor").innerText;
+      if (window.Android) {
+          window.Android.readText(teks);
+      } else {
+          const synth = window.speechSynthesis;
+          const utter = new SpeechSynthesisUtterance(teks);
+          utter.lang = 'id-ID';
+          synth.speak(utter);
+      }
+    }
+
+    // --- Absen Functions ---
+    function tambahAbsenBaris() {
+      const tbody = document.querySelector("#absenTable tbody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><input type="text" placeholder="Nama"></td><td><input type="text" placeholder="Jabatan"></td>`;
+      tbody.appendChild(tr);
+    }
+
+    for (let i = 0; i < 7; i++) tambahAbsenBaris();
+
+    function simpanAbsen() {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk menyimpan absen.");
+        return;
+      }
+      const data = [];
+      document.querySelectorAll("#absenTable tbody tr").forEach(row => {
+        const nama = row.children[0].children[0].value;
+        const jabatan = row.children[1].children[0].value;
+        if (nama) data.push({ nama, jabatan });
+      });
+      db.collection("absen").add({ data, waktu: new Date(), userId: currentUser.uid })
+        .then(() => {
+            alert("Absen disimpan!");
+        })
+        .catch(error => {
+            console.error("Error saving absen:", error);
+            alert("Gagal menyimpan absen.");
+        });
+    }
+
+    // --- Notulen Functions ---
+    function saveNotulen() {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk menyimpan notulen.");
+        return;
+      }
+      const isi = document.getElementById("notulenEditor").innerHTML;
+      const tanggal = document.getElementById("notulenTanggal").value;
+      
+      db.collection("notulen").add({ 
+        isi, 
+        tanggal, 
+        waktu: new Date(), 
+        userId: currentUser.uid 
+      })
+      .then(() => {
+        alert("Notulen disimpan!");
+        loadNotulenHistori();
+      })
+      .catch(error => {
+        console.error("Error saving notulen:", error);
+        alert("Gagal menyimpan notulen.");
+      });
+    }
+
+    // --- PDF Export Function ---
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text(document.getElementById("notulenEditor").innerText, 10, 10);
+      
+      if (window.Android) {
+          const pdfData = doc.output('datauristring');
+          window.Android.saveFile("Notulen-Rapat.pdf", pdfData.substring(pdfData.indexOf(',') + 1));
+      } else {
+          doc.save("Notulen-Rapat.pdf");
+      }
+    }
+
+    // --- Cloudinary Integration for Media Uploads (for Notulen) ---
+    async function uploadMediaToCloudinary(event) {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk mengunggah media.");
+        return;
+      }
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      try {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${file.type.startsWith('image') ? 'image' : 'video'}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+
+        if (data.secure_url) {
+          const mediaUrl = data.secure_url;
+          if (file.type.startsWith('image')) {
+            const img = document.createElement("img");
+            img.src = mediaUrl;
+            img.style.maxWidth = "100%";
+            document.getElementById("notulenEditor").appendChild(img);
+          } else if (file.type.startsWith('video')) {
+            const video = document.createElement("video");
+            video.src = mediaUrl;
+            video.controls = true;
+            video.style.maxWidth = "100%";
+            document.getElementById("notulenEditor").appendChild(video);
+          }
+          db.collection("media").add({
+            url: mediaUrl,
+            type: file.type.startsWith('image') ? 'image' : 'video',
+            filename: file.name,
+            waktu: new Date(),
+            userId: currentUser.uid
+          }).then(() => {
+            console.log("Media reference saved to Firebase.");
+            loadMediaHistori();
+          })
+          .catch(error => {
+              console.error("Error saving media reference:", error);
+              alert("Gagal menyimpan referensi media.");
+          });
+        } else {
+          alert("Gagal mengunggah media ke Cloudinary.");
+          console.error("Cloudinary upload failed:", data);
+        }
+      } catch (error) {
+        console.error("Error uploading media:", error);
+        alert("Terjadi kesalahan saat mengunggah media.");
+      }
+    }
+
+    async function uploadMultipleMediaToCloudinary(event) {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk mengunggah media.");
+        return;
+      }
+      const files = Array.from(event.target.files);
+      const mediaList = document.getElementById("mediaList");
+      mediaList.innerHTML = "";
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+          const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${file.type.startsWith('image') ? 'image' : 'video'}/upload`, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await response.json();
+
+          if (data.secure_url) {
+            const mediaUrl = data.secure_url;
+            const col = document.createElement("div");
+            col.className = "col";
+            if (file.type.startsWith('image')) {
+              col.innerHTML = `
+                <div class="history-item">
+                  <h6>Gambar: ${file.name}</h6>
+                  <img src="${mediaUrl}" class="img-fluid rounded">
+                  <div class="history-date">Diunggah: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              `;
+            } else if (file.type.startsWith('video')) {
+              col.innerHTML = `
+                <div class="history-item">
+                  <h6>Video: ${file.name}</h6>
+                  <video src="${mediaUrl}" controls class="img-fluid rounded"></video>
+                  <div class="history-date">Diunggah: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              `;
+            }
+            mediaList.appendChild(col);
+            db.collection("media").add({
+              url: mediaUrl,
+              type: file.type.startsWith('image') ? 'image' : 'video',
+              filename: file.name,
+              waktu: new Date(),
+              userId: currentUser.uid
+            }).then(() => {
+              console.log("Media reference saved to Firebase.");
+              loadMediaHistori();
+            })
+            .catch(error => {
+                console.error("Error saving media reference:", error);
+                alert("Gagal menyimpan referensi media.");
+            });
+          } else {
+            console.error("Cloudinary upload failed for a file:", data);
+          }
+        } catch (error) {
+          console.error("Error uploading a file:", error);
+        }
+      }
+    }
+
+    // Undangan functions
+    function simpanUndangan() {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk menyimpan undangan.");
+        return;
+      }
+      const tanggal = document.getElementById("undanganTanggal").value;
+      const tempat = document.getElementById("undanganTempat").value;
+      const agenda = document.getElementById("undanganAgenda").value;
+      const peserta = document.getElementById("undanganPeserta").value;
+      const catatan = document.getElementById("undanganCatatan").value;
+
+      if (!tanggal || !tempat || !agenda) {
+        alert("Harap isi tanggal, tempat, dan agenda undangan!");
+        return;
+      }
+
+      db.collection("undangan").add({
+        tanggal,
+        tempat,
+        agenda,
+        peserta,
+        catatan,
+        waktu: new Date(),
+        userId: currentUser.uid
+      }).then(() => {
+        alert("Undangan berhasil disimpan!");
+        loadUndanganHistori();
+      }).catch(error => {
+        console.error("Error saving invitation:", error);
+        alert("Gagal menyimpan undangan.");
+      });
+    }
+
+    function shareUndangan() {
+      const tanggal = document.getElementById("undanganTanggal").value;
+      const tempat = document.getElementById("undanganTempat").value;
+      const agenda = document.getElementById("undanganAgenda").value;
+      const peserta = document.getElementById("undanganPeserta").value;
+      const catatan = document.getElementById("undanganCatatan").value;
+
+      if (!tanggal || !tempat || !agenda) {
+        alert("Harap isi tanggal, tempat, dan agenda undangan sebelum dibagikan!");
+        return;
+      }
+
+      const dateObj = new Date(tanggal);
+      const formattedDate = dateObj.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      let message = `*Undangan Rapat ${organizationName}*\n\n`;
+      message += `📅 *Tanggal*: ${formattedDate}\n`;
+      message += `📍 *Tempat*: ${tempat}\n`;
+      message += `📝 *Agenda*: ${agenda}\n`;
+      if (peserta) message += `👥 *Peserta*: ${peserta}\n`;
+      if (catatan) message += `📌 *Catatan*: ${catatan}\n\n`;
+      message += `_*Harap konfirmasi kehadiran Anda_`;
+
+      if (window.Android) {
+        window.Android.shareText(message, "Bagikan Undangan");
+      } else {
+        const encodedMessage = encodeURIComponent(message);
+        window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+      }
+    }
+
+    // Agenda functions
+    function simpanAgenda() {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk menyimpan agenda.");
+        return;
+      }
+      const tanggal = document.getElementById("agendaTanggal").value;
+      const judul = document.getElementById("agendaJudul").value;
+      const poin = document.getElementById("agendaPoin").value;
+
+      if (!tanggal || !judul || !poin) {
+        alert("Harap isi semua field agenda!");
+        return;
+      }
+
+      db.collection("agenda").add({
+        tanggal,
+        judul,
+        poin,
+        waktu: new Date(),
+        userId: currentUser.uid
+      }).then(() => {
+        alert("Agenda berhasil disimpan!");
+        loadAgendaHistori();
+      }).catch(error => {
+        console.error("Error saving agenda:", error);
+        alert("Gagal menyimpan agenda.");
+      });
+    }
+
+    function shareAgenda() {
+      const tanggal = document.getElementById("agendaTanggal").value;
+      const judul = document.getElementById("agendaJudul").value;
+      const poin = document.getElementById("agendaPoin").value;
+
+      if (!tanggal || !judul || !poin) {
+        alert("Harap isi semua field agenda sebelum dibagikan!");
+        return;
+      }
+
+      const dateObj = new Date(tanggal);
+      const formattedDate = dateObj.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      let message = `*Agenda Rapat ${organizationName}*\n\n`;
+      message += `📅 *Tanggal*: ${formattedDate}\n`;
+      message += `📌 *Judul*: ${judul}\n\n`;
+      message += `*Poin-poin Agenda*:\n${poin.split('\n').map(p => `• ${p.trim()}`).join('\n')}\n\n`;
+      message += `_*Mari kita persiapkan dengan baik_`;
+
+      if (window.Android) {
+        window.Android.shareText(message, "Bagikan Agenda");
+      } else {
+        const encodedMessage = encodeURIComponent(message);
+        window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+      }
+    }
+
+    // Progres functions
+    function simpanProgres() {
+      if (!currentUser) {
+        alert("Harap masuk terlebih dahulu untuk menyimpan progres.");
+        return;
+      }
+      const tanggal = document.getElementById("progresTanggal").value;
+      const isi = document.getElementById("progresIsi").value;
+
+      if (!tanggal || !isi) {
+        alert("Harap isi tanggal dan isi progres!");
+        return;
+      }
+
+      db.collection("progres").add({
+        tanggal,
+        isi,
+        waktu: new Date(),
+        userId: currentUser.uid
+      }).then(() => {
+        alert("Progres berhasil disimpan!");
+        loadProgresHistori();
+      }).catch(error => {
+        console.error("Error saving progress:", error);
+        alert("Gagal menyimpan progres.");
+      });
+    }
+
+    function shareProgres() {
+      const tanggal = document.getElementById("progresTanggal").value;
+      const isi = document.getElementById("progresIsi").value;
+
+      if (!tanggal || !isi) {
+        alert("Harap isi tanggal dan isi progres sebelum dibagikan!");
+        return;
+      }
+
+      const dateObj = new Date(tanggal);
+      const formattedDate = dateObj.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      let message = `*Update Progres Rapat ${organizationName}*\n\n`;
+      message += `📅 *Tanggal*: ${formattedDate}\n\n`;
+      message += `*Progres*:\n${isi}\n\n`;
+      message += `_*Mari kita terus pantau perkembangan ini_`;
+
+      if (window.Android) {
+        window.Android.shareText(message, "Bagikan Progres");
+      } else {
+        const encodedMessage = encodeURIComponent(message);
+        window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+      }
+    }
+
+    // --- WhatsApp Specific Functions ---
+    async function uploadWhatsappMedia(event) {
+        if (!currentUser) {
+            alert("Harap masuk terlebih dahulu untuk mengunggah media.");
+            return;
+        }
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${file.type.startsWith('image') ? 'image' : 'video'}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.secure_url) {
+                const mediaUrl = data.secure_url;
+                lastWhatsappMediaUrl = mediaUrl;
+                if (file.type.startsWith('image')) {
+                    const img = document.createElement("img");
+                    img.src = mediaUrl;
+                    img.style.maxWidth = "100%";
+                    document.getElementById("whatsappBodyEditor").appendChild(img);
+                } else if (file.type.startsWith('video')) {
+                    const video = document.createElement("video");
+                    video.src = mediaUrl;
+                    video.controls = true;
+                    video.style.maxWidth = "100%";
+                    document.getElementById("whatsappBodyEditor").appendChild(video);
+                }
+                alert("Media berhasil diunggah!");
+            } else {
+                alert("Gagal mengunggah media ke Cloudinary.");
+                console.error("Cloudinary upload failed:", data);
+                lastWhatsappMediaUrl = null;
+            }
+        } catch (error) {
+            console.error("Error uploading media:", error);
+            alert("Terjadi kesalahan saat mengunggah media.");
+            lastWhatsappMediaUrl = null;
+        }
+    }
+
+    function simpanWhatsApp() {
+        if (!currentUser) {
+            alert("Harap masuk terlebih dahulu untuk menyimpan pesan WhatsApp.");
+            return;
+        }
+        const tanggal = document.getElementById("whatsappTanggal").value;
+        const header = document.getElementById("whatsappHeader").value;
+        const body = document.getElementById("whatsappBodyEditor").innerHTML;
+        const footer = document.getElementById("whatsappFooter").value;
+
+        db.collection("whatsapp_messages").add({
+            tanggal,
+            header,
+            body,
+            footer,
+            mediaUrl: lastWhatsappMediaUrl,
+            waktu: new Date(),
+            userId: currentUser.uid
+        }).then(() => {
+            alert("Pesan WhatsApp berhasil disimpan!");
+            loadWhatsappHistori();
+            lastWhatsappMediaUrl = null;
+        }).catch(error => {
+            console.error("Error saving WhatsApp message:", error);
+            alert("Gagal menyimpan pesan WhatsApp.");
+        });
+    }
+
+    function bacaWhatsApp() {
+        const textToRead = document.getElementById("whatsappBodyEditor").innerText;
+        const convertNumbersToWords = (text) => {
+            return text.replace(/(\d{1,3}(,\d{3})*(\.\d+)?)/g, (match) => {
+                const number = parseFloat(match.replace(/,/g, ''));
+                if (isNaN(number)) return match;
+
+                const units = ['', 'ribu', 'juta', 'miliar', 'triliun'];
+                let i = 0;
+                let result = '';
+                let tempNum = number;
+                if (tempNum === 0) return 'nol';
+                if (tempNum >= 1000000000) {
+                    result = convertNumbersToWords(Math.floor(tempNum / 1000000000)) + ' miliar ';
+                    tempNum %= 1000000000;
+                }
+                if (tempNum >= 1000000) {
+                    result += convertNumbersToWords(Math.floor(tempNum / 1000000)) + ' juta ';
+                    tempNum %= 1000000;
+                }
+                if (tempNum >= 1000) {
+                    result += (Math.floor(tempNum / 1000) === 1 ? 'seribu' : convertNumbersToWords(Math.floor(tempNum / 1000)) + ' ribu') + ' ';
+                    tempNum %= 1000;
+                }
+                if (tempNum > 0) {
+                    let chunkText = '';
+                    if (tempNum >= 100) {
+                        chunkText += (Math.floor(tempNum / 100) === 1 ? 'seratus' : convertDigitToWord(Math.floor(tempNum / 100)) + ' ratus') + ' ';
+                    }
+                    const remainder = tempNum % 100;
+                    if (remainder > 0) {
+                        if (remainder < 10) {
+                            chunkText += convertDigitToWord(remainder);
+                        } else if (remainder < 20) {
+                            chunkText += convertTeensToWord(remainder);
+                        } else {
+                            chunkText += convertDigitToWord(Math.floor(remainder / 10)) + ' puluh';
+                            if (remainder % 10 > 0) {
+                                chunkText += ' ' + convertDigitToWord(remainder % 10);
+                            }
+                        }
+                    }
+                    result += chunkText.trim();
+                }
+                return result.trim();
+            });
+        };
+
+        const convertDigitToWord = (digit) => {
+            const words = ['nol', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
+            return words[digit];
+        };
+
+        const convertTeensToWord = (num) => {
+            if (num === 10) return 'sepuluh';
+            if (num === 11) return 'sebelas';
+            if (num >= 12 && num <= 19) return convertDigitToWord(num % 10) + ' belas';
+            return '';
+        };
+
+        const processedText = convertNumbersToWords(textToRead);
+        if (window.Android) {
+            window.Android.readText(processedText);
+        } else {
+            const synth = window.speechSynthesis;
+            const utter = new SpeechSynthesisUtterance(processedText);
+            utter.lang = 'id-ID';
+            synth.speak(utter);
+        }
+    }
+
+    function startWhatsappVoiceToText() {
+      if (window.Android) {
+          window.Android.startVoiceToText("whatsappBodyEditor");
+      } else if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+          const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+          recognition.lang = 'id-ID';
+          recognition.onresult = e => {
+              document.getElementById("whatsappBodyEditor").innerHTML += e.results[0][0].transcript + " ";
+          };
+          recognition.start();
+      } else {
+          alert("Pengenalan suara tidak didukung di browser ini.");
+      }
+    }
+
+    function getWhatsappShareContent(includeMediaUrl = false) {
+        const tanggal = document.getElementById("whatsappTanggal").value;
+        const header = document.getElementById("whatsappHeader").value;
+        const body = document.getElementById("whatsappBodyEditor").innerHTML;
+        const footer = document.getElementById("whatsappFooter").value;
+        const mediaUrl = lastWhatsappMediaUrl;
+
+        const dateObj = new Date(tanggal);
+        const formattedDate = dateObj.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        let messageBody = body.replace(/<img[^>]*src="([^"]*)"[^>]*>/g, (match, src) => `[Gambar: ${src}]`)
+                              .replace(/<video[^>]*src="([^"]*)"[^>]*>.*?<\/video>/g, (match, src) => `[Video: ${src}]`)
+                              .replace(/<p[^>]*>/g, '\n')
+                              .replace(/<br[^>]*>/g, '\n')
+                              .replace(/<\/?(b|strong)>/g, '*')
+                              .replace(/<\/?i>/g, '_')
+                              .replace(/<\/?u>/g, '~')
+                              .replace(/<\/?s>/g, '`')
+                              .replace(/<[^>]*>/g, '')
+                              .replace(/\&nbsp;/g, ' ')
+                              .trim();
+
+        let message = '';
+        if (header) message += `${header}\n\n`;
+        message += `Tanggal: ${formattedDate}\n\n`;
+        message += `${messageBody}\n\n`;
+        if (footer) message += `${footer}\n\n`;
+        message += `Pesan ini dikirim dari aplikasi ${organizationName}`;
+
+        if (includeMediaUrl && mediaUrl) {
+            message += `\n\nLink Media: ${mediaUrl}`;
+        }
+        
+        return message;
+    }
+
+    function shareWhatsApp() {
+        const message = getWhatsappShareContent(true);
+        if (!message) {
+            alert("Konten WhatsApp kosong. Harap isi pesan terlebih dahulu.");
+            return;
+        }
+
+        if (window.Android) {
+            window.Android.shareText(message, "Bagikan Pesan WhatsApp");
+        } else {
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+        }
+    }
+
+    function shareToFacebook() {
+        const text = getWhatsappShareContent(true);
+        if (!text) { alert("Konten kosong."); return; }
+        if (window.Android) {
+            window.Android.shareText(text, "Bagikan ke Facebook");
+        } else {
+            const url = `https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}&u=${encodeURIComponent(lastWhatsappMediaUrl || window.location.href)}`;
+            window.open(url, '_blank', 'width=600,height=400');
+        }
+    }
+
+    function shareToTwitter() {
+        const text = getWhatsappShareContent(true);
+        if (!text) { alert("Konten kosong."); return; }
+        if (window.Android) {
+            window.Android.shareText(text, "Bagikan ke X (Twitter)");
+        } else {
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(lastWhatsappMediaUrl || window.location.href)}`;
+            window.open(url, '_blank', 'width=600,height=400');
+        }
+    }
+
+    function shareToLinkedIn() {
+        const text = getWhatsappShareContent(true);
+        if (!text) { alert("Konten kosong."); return; }
+        if (window.Android) {
+            window.Android.shareText(text, "Bagikan ke LinkedIn");
+        } else {
+            const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(lastWhatsappMediaUrl || window.location.href)}&title=${encodeURIComponent(document.getElementById("whatsappHeader").value || "Pesan dari Tius APP")}&summary=${encodeURIComponent(text)}`;
+            window.open(url, '_blank', 'width=600,height=400');
+        }
+    }
+
+    function shareToTelegram() {
+        const text = getWhatsappShareContent(true);
+        if (!text) { alert("Konten kosong."); return; }
+        if (window.Android) {
+            window.Android.shareText(text, "Bagikan ke Telegram");
+        } else {
+            const url = `https://t.me/share/url?url=${encodeURIComponent(lastWhatsappMediaUrl || window.location.href)}&text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank', 'width=600,height=400');
+        }
+    }
+    
+    function shareToCopy() {
+        const text = getWhatsappShareContent(true);
+        if (!text) { alert("Konten kosong."); return; }
+        if (window.Android) {
+            window.Android.copyToClipboard(text);
+        } else {
+            navigator.clipboard.writeText(text)
+                .then(() => alert("Teks berhasil disalin!"))
+                .catch(err => console.error('Gagal menyalin teks: ', err));
+        }
+    }
+
+    // New backup function for Android
+    function startBackup() {
+      if (window.Android) {
+        window.Android.backupData();
+      } else {
+        alert("Fitur cadangan hanya tersedia di aplikasi Android.");
+      }
+    }
+
+    // Callback function for Android Voice to Text
+    window.onSpeechResult = (text, targetId) => {
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+            targetElement.innerHTML += text + " ";
+        }
+    };
+
+    // History loading functions
+    function loadAgendaHistori() {
+      if (!currentUser) return;
+      db.collection("agenda")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("waktu", "desc")
+        .get()
+        .then(querySnapshot => {
+          const container = document.getElementById("agendaHistoriList");
+          container.innerHTML = "";
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const date = data.waktu.toDate();
+            const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const agendaDate = new Date(data.tanggal);
+            const formattedAgendaDate = agendaDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+              <h6>${data.judul}</h6>
+              <div class="history-date">${formattedAgendaDate}</div>
+              <p>${data.poin.split('\n').map(p => `• ${p.trim()}`).join('<br>')}</p>
+              <div class="history-date">Disimpan: ${formattedDate}</div>
+              <button class="share-btn w-100" onclick="shareHistoryItem('agenda', '${data.judul}', '${formattedAgendaDate}', '${data.poin.replace(/\n/g, '\\n')}')">
+                📤 Bagikan
+              </button>
+            `;
+            container.appendChild(item);
+          });
+          hideLoading('loadingAgenda');
+        })
+        .catch(error => {
+          console.error("Error loading agenda history:", error);
+          hideLoading('loadingAgenda');
+          alert("Gagal memuat histori agenda.");
+        });
+    }
+
+    function loadUndanganHistori() {
+      if (!currentUser) return;
+      db.collection("undangan")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("waktu", "desc")
+        .get()
+        .then(querySnapshot => {
+          const container = document.getElementById("undanganHistoriList");
+          container.innerHTML = "";
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const date = data.waktu.toDate();
+            const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const undanganDate = new Date(data.tanggal);
+            const formattedUndanganDate = undanganDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+              <h6>${data.agenda}</h6>
+              <div class="history-date">${formattedUndanganDate}</div>
+              <p><strong>Tempat:</strong> ${data.tempat}</p>
+              ${data.peserta ? `<p><strong>Peserta:</strong> ${data.peserta}</p>` : ''}
+              ${data.catatan ? `<p><strong>Catatan:</strong> ${data.catatan}</p>` : ''}
+              <div class="history-date">Disimpan: ${formattedDate}</div>
+              <button class="share-btn w-100" onclick="shareHistoryItem('undangan', '${data.agenda}', '${formattedUndanganDate}', '${data.tempat}', '${data.peserta ? data.peserta.replace(/\n/g, '\\n') : ''}', '${data.catatan ? data.catatan.replace(/\n/g, '\\n') : ''}')">
+                📤 Bagikan
+              </button>
+            `;
+            container.appendChild(item);
+          });
+          hideLoading('loadingUndangan');
+        })
+        .catch(error => {
+          console.error("Error loading invitation history:", error);
+          hideLoading('loadingUndangan');
+          alert("Gagal memuat histori undangan.");
+        });
+    }
+
+    function loadNotulenHistori() {
+      if (!currentUser) return;
+      db.collection("notulen")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("waktu", "desc")
+        .get()
+        .then(querySnapshot => {
+          const container = document.getElementById("notulenHistoriList");
+          container.innerHTML = "";
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const date = data.waktu.toDate();
+            const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const notulenDate = data.tanggal ? new Date(data.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanpa tanggal';
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+              <h6>Notulen Rapat</h6>
+              <div class="history-date">${notulenDate}</div>
+              <p>${data.isi.substring(0, 100)}...</p>
+              <div class="history-date">Disimpan: ${formattedDate}</div>
+              <button class="share-btn w-100" onclick="shareHistoryItem('notulen', '${notulenDate}', '${data.isi.replace(/\n/g, '\\n').substring(0, 200)}...')">
+                📤 Bagikan
+              </button>
+            `;
+            container.appendChild(item);
+          });
+          hideLoading('loadingNotulen');
+        })
+        .catch(error => {
+          console.error("Error loading notulen history:", error);
+          hideLoading('loadingNotulen');
+          alert("Gagal memuat histori notulen.");
+        });
+    }
+
+    function loadProgresHistori() {
+      if (!currentUser) return;
+      db.collection("progres")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("waktu", "desc")
+        .get()
+        .then(querySnapshot => {
+          const container = document.getElementById("progresHistoriList");
+          container.innerHTML = "";
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const date = data.waktu.toDate();
+            const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const progresDate = new Date(data.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+              <h6>Update Progres</h6>
+              <div class="history-date">${progresDate}</div>
+              <p>${data.isi.substring(0, 100)}...</p>
+              <div class="history-date">Disimpan: ${formattedDate}</div>
+              <button class="share-btn w-100" onclick="shareHistoryItem('progres', '${progresDate}', '${data.isi.replace(/\n/g, '\\n').substring(0, 200)}...')">
+                📤 Bagikan
+              </button>
+            `;
+            container.appendChild(item);
+          });
+          hideLoading('loadingProgres');
+        })
+        .catch(error => {
+          console.error("Error loading progress history:", error);
+          hideLoading('loadingProgres');
+          alert("Gagal memuat histori progres.");
+        });
+    }
+
+    function loadMediaHistori() {
+      if (!currentUser) return;
+      db.collection("media")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("waktu", "desc")
+        .get()
+        .then(querySnapshot => {
+          const container = document.getElementById("mediaHistoriList");
+          container.innerHTML = "";
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const date = data.waktu.toDate();
+            const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const item = document.createElement("div");
+            item.className = "col";
+            if (data.type === 'image') {
+              item.innerHTML = `
+                <div class="history-item">
+                  <h6>Gambar: ${data.filename}</h6>
+                  <img src="${data.url}" class="img-fluid rounded mt-2 mb-2">
+                  <div class="history-date">Diunggah: ${formattedDate}</div>
+                  <button class="share-btn w-100" onclick="shareHistoryItem('media', 'Gambar', '${data.filename}', '${data.url}')">
+                    📤 Bagikan
+                  </button>
+                </div>
+              `;
+            } else if (data.type === 'video') {
+              item.innerHTML = `
+                <div class="history-item">
+                  <h6>Video: ${data.filename}</h6>
+                  <video src="${data.url}" controls class="img-fluid rounded mt-2 mb-2"></video>
+                  <div class="history-date">Diunggah: ${formattedDate}</div>
+                  <button class="share-btn w-100" onclick="shareHistoryItem('media', 'Video', '${data.filename}', '${data.url}')">
+                    📤 Bagikan
+                  </button>
+                </div>
+              `;
+            }
+            container.appendChild(item);
+          });
+          hideLoading('loadingMedia');
+        })
+        .catch(error => {
+          console.error("Error loading media history:", error);
+          hideLoading('loadingMedia');
+          alert("Gagal memuat histori media.");
+        });
+    }
+
+    function loadWhatsappHistori() {
+        if (!currentUser) return;
+        db.collection("whatsapp_messages")
+            .where("userId", "==", currentUser.uid)
+            .orderBy("waktu", "desc")
+            .get()
+            .then(querySnapshot => {
+                const container = document.getElementById("whatsappHistoriList");
+                container.innerHTML = "";
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.waktu.toDate();
+                    const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const whatsappMsgDate = new Date(data.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const item = document.createElement("div");
+                    item.className = "history-item";
+                    item.innerHTML = `
+                        <h6>${data.header || 'Pesan WhatsApp'}</h6>
+                        <div class="history-date">Tanggal Pesan: ${whatsappMsgDate}</div>
+                        <p>${data.body.replace(/<img[^>]*>/g, '[Gambar]').replace(/<video[^>]*>.*?<\/video>/g, '[Video]').substring(0, 150)}...</p>
+                        ${data.mediaUrl ? `<img src="${data.mediaUrl}" class="img-fluid rounded mt-2 mb-2" alt="Media WhatsApp">` : ''}
+                        ${data.footer ? `<p><i>${data.footer}</i></p>` : ''}
+                        <div class="history-date">Disimpan: ${formattedDate}</div>
+                        <button class="share-btn w-100" onclick="shareHistoryItem('whatsapp', '${data.tanggal}', '${data.header ? data.header.replace(/'/g, "\\'") : ''}', '${data.body.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', '${data.footer ? data.footer.replace(/'/g, "\\'") : ''}', '${data.mediaUrl || ''}')">
+                            📤 Bagikan
+                        </button>
+                    `;
+                    container.appendChild(item);
+                });
+                hideLoading('loadingWhatsapp');
+            })
+            .catch(error => {
+                console.error("Error loading WhatsApp history:", error);
+                hideLoading('loadingWhatsapp');
+                alert("Gagal memuat histori WhatsApp.");
+            });
+    }
+
+
+    function shareHistoryItem(type, ...args) {
+      let message = '';
+      if (type === 'agenda') {
+        const [judul, tanggal, poin] = args;
+        message = `*Agenda Rapat ${organizationName}*\n\n`;
+        message += `📅 *Tanggal*: ${tanggal}\n`;
+        message += `📌 *Judul*: ${judul}\n\n`;
+        message += `*Poin-poin Agenda*:\n${poin.replace(/\\n/g, '\n')}\n\n`;
+        message += `_*Mari kita persiapkan dengan baik_`;
+      }
+      else if (type === 'undangan') {
+        const [agenda, tanggal, tempat, peserta, catatan] = args;
+        message = `*Undangan Rapat ${organizationName}*\n\n`;
+        message += `📅 *Tanggal*: ${tanggal}\n`;
+        message += `📍 *Tempat*: ${tempat}\n`;
+        message += `📝 *Agenda*: ${agenda}\n`;
+        if (peserta) message += `👥 *Peserta*: ${peserta.replace(/\\n/g, '\n')}\n`;
+        if (catatan) message += `📌 *Catatan*: ${catatan.replace(/\\n/g, '\n')}\n\n`;
+        message += `_*Harap konfirmasi kehadiran Anda_`;
+      }
+      else if (type === 'notulen') {
+        const [tanggal, isi] = args;
+        message = `*Notulen Rapat ${organizationName}*\n\n`;
+        message += `📅 *Tanggal*: ${tanggal}\n\n`;
+        message += `*Isi Notulen*:\n${isi.replace(/\\n/g, '\n')}\n\n`;
+        message += `_*Untuk informasi lebih lengkap, silakan buka aplikasi_`;
+      }
+      else if (type === 'progres') {
+        const [tanggal, isi] = args;
+        message = `*Update Progres Rapat ${organizationName}*\n\n`;
+        message += `📅 *Tanggal*: ${tanggal}\n\n`;
+        message += `*Progres*:\n${isi}\n\n`;
+        message += `_*Mari kita terus pantau perkembangan ini_`;
+      }
+      else if (type === 'media') {
+        const [mediaType, filename, url] = args;
+        message = `*Dokumentasi ${mediaType} Rapat ${organizationName}*\n\n`;
+        message += `Nama File: ${filename}\n`;
+        message += `Lihat di: ${url}\n\n`;
+        message += `_*Tersedia di aplikasi dokumentasi rapat_`;
+      }
+      else if (type === 'whatsapp') {
+          const [tanggal, header, bodyHtml, footer, mediaUrl] = args;
+          const dateObj = new Date(tanggal);
+          const formattedDate = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          let messageBody = bodyHtml.replace(/<img[^>]*src="([^"]*)"[^>]*>/g, (match, src) => `[Gambar: ${src}]`)
+                                  .replace(/<video[^>]*src="([^"]*)"[^>]*>.*?<\/video>/g, (match, src) => `[Video: ${src}]`)
+                                  .replace(/<p[^>]*>/g, '\n')
+                                  .replace(/<br[^>]*>/g, '\n')
+                                  .replace(/<\/?(b|strong)>/g, '*')
+                                  .replace(/<\/?i>/g, '_')
+                                  .replace(/<\/?u>/g, '~')
+                                  .replace(/<\/?s>/g, '`')
+                                  .replace(/<[^>]*>/g, '')
+                                  .replace(/\&nbsp;/g, ' ')
+                                  .trim();
+          if (header) message += `*${header}*\n\n`;
+          message += `📅 *Tanggal*: ${formattedDate}\n\n`;
+          message += `${messageBody}\n\n`;
+          if (mediaUrl) {
+            message += `${mediaUrl}\n\n`;
+          }
+          if (footer) message += `${footer}\n\n`;
+          message += `_Pesan ini dikirim dari aplikasi ${organizationName}_`;
+      }
+      
+      if (window.Android) {
+          window.Android.shareText(message, "Bagikan Riwayat");
+      } else {
+          const encodedMessage = encodeURIComponent(message);
+          window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+      }
+    }
+  </script>
+</body>
+</html>
